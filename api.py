@@ -38,8 +38,15 @@ class IQOptionAPI(object):
         self.session.trust_env = False
         self.username = username
         self.password = password
+        
+        self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'}
 
-
+    def set_session_cookie(self, val):
+        for k,v in self.session.cookies.iteritems():
+            if not isinstance(v, str):
+                self.session.cookies[k] = str(v) 
+        requests.utils.add_dict_to_cookiejar(self.session.cookies, val)
+        
     def prepare_url(self, resource):
         """
         Construct url from resource url.
@@ -160,10 +167,11 @@ class IQOptionAPI(object):
 
     def connect(self):
         """Method for connection to api."""
+        
         response = self.login(self.username, self.password)
         ssid = response.cookies["ssid"]
-
-        ssid = "ea1cc76cc8237ea766f53e87f7063a01"
+        
+        self.set_session_cookie({"platform": "9", "platform_version": "387.2.4fc", "is_regulated": '0', "authorization":"1", "ru_restricted_popup_shown": "1", "aff": "1503", "afftrack": "home"})
 
         websocket = Websocket(self.wss_url)
         websocket.connect()
@@ -187,7 +195,7 @@ class IQOptionAPI(object):
         self.unsubscribe("timeSync")
         self.setactives(99)
 
-
-        for i in range(60):
-            time.sleep(1)
-            self.buy(self.websocket.time, self.websocket.show_value)
+        if(self.websocket.show_value != None and self.websocket.skey != None):
+            for i in range(60):
+                time.sleep(1)
+                self.buy(self.websocket.time, self.websocket.show_value)
